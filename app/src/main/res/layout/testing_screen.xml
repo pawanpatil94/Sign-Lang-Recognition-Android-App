@@ -14,15 +14,6 @@
         android:layout_alignParentLeft="true"
         android:layout_alignParentStart="true" />
 
-    <Button
-        android:id="@+id/scanButton"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="Scan"
-        android:layout_centerVertical="true"
-        android:layout_alignParentLeft="true"
-        android:layout_alignParentStart="true" />
-
     <TextView
         android:id="@+id/text_Choose_letter"
         android:layout_width="wrap_content"
@@ -42,6 +33,47 @@
         android:textAppearance="@style/TextAppearance.AppCompat.Display3"
         android:layout_above="@+id/text_Choose_letter"
         android:layout_centerHorizontal="true" />
+
+    <TextView
+        android:id="@+id/gestureClass"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentStart="true"
+        android:layout_below="@+id/linearLayout"
+        android:layout_marginTop="50dp"
+        android:gravity="center_vertical|center_horizontal|center"
+        android:textColor="@android:color/holo_red_dark"
+        android:textSize="100sp" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentStart="true"
+        android:layout_centerVertical="true"
+        android:layout_marginLeft="40dp"
+        android:layout_marginRight="40dp"
+        android:orientation="horizontal"
+        android:id="@+id/linearLayout">
+
+        <Button
+            android:id="@+id/scanButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentLeft="true"
+            android:layout_alignParentStart="true"
+            android:layout_centerVertical="true"
+            android:layout_weight="1"
+            android:text="Try" />
+
+        <Button
+            android:id="@+id/cancelButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="Cancel" />
+    </LinearLayout>
 
 
 </RelativeLayout>

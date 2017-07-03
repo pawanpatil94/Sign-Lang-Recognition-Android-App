@@ -13,22 +13,22 @@
         android:text="Tutorial" />
 
     <Button
-        android:id="@+id/trainButton"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_alignEnd="@+id/tutorialButton"
-        android:layout_alignRight="@+id/tutorialButton"
-        android:layout_below="@+id/tutorialButton"
-        android:layout_marginTop="46dp"
-        android:text="Train" />
-
-    <Button
         android:id="@+id/TestButton"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_alignEnd="@+id/trainButton"
-        android:layout_alignRight="@+id/trainButton"
-        android:layout_below="@+id/trainButton"
-        android:layout_marginTop="54dp"
-        android:text="Test" />
+        android:text="Test"
+        android:layout_alignParentBottom="true"
+        android:layout_alignLeft="@+id/tutorialButton"
+        android:layout_alignStart="@+id/tutorialButton"
+        android:layout_marginBottom="120dp" />
+
+    <Button
+        android:id="@+id/mainTrain"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignLeft="@+id/tutorialButton"
+        android:layout_alignStart="@+id/tutorialButton"
+        android:layout_below="@+id/tutorialButton"
+        android:layout_marginTop="57dp"
+        android:text="Train" />
 </RelativeLayout>

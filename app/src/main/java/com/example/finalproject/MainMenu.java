@@ -7,14 +7,17 @@ import android.support.v7.app.AppCompatActivity;
 import android.view.View;
 import android.widget.Button;
 
+import java.util.HashSet;
+
 /**
  * Created by pawan on 6/25/17.
  */
 
 public class MainMenu extends AppCompatActivity {
 
-    private Button testButton, tutorialButton;
+    private Button trainButton, testButton, tutorialButton;
     final Context context = this;
+    static HashSet<String> availableTest = new HashSet<String>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -23,6 +26,7 @@ public class MainMenu extends AppCompatActivity {
 
         testButton = (Button) findViewById(R.id.TestButton);
         tutorialButton = (Button) findViewById(R.id.tutorialButton);
+        trainButton = (Button) findViewById(R.id.mainTrain);
 
         // Re-diect to test screen
         testButton.setOnClickListener(new View.OnClickListener() {
@@ -42,5 +46,12 @@ public class MainMenu extends AppCompatActivity {
             }
         });
 
+        trainButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent trainScreen = new Intent(context, TrainScreenActivity.class);
+                startActivity(trainScreen);
+            }
+        });
     }
 }
