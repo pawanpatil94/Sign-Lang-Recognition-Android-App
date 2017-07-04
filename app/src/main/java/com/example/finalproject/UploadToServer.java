@@ -3,8 +3,10 @@ package com.example.finalproject;
 /**
  * Created by pawan on 7/1/17.
  */
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 
-
+import java.io.InputStream;
 import java.net.Socket;
 import java.net.URL;
 import java.io.BufferedReader;
@@ -16,7 +18,6 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
-import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
@@ -56,7 +57,11 @@ public class UploadToServer {
 
         try {
             FileInputStream fileInputStream = new FileInputStream(sourceFile);
-            URL url = new URL("http://192.168.57.1/UploadToServer.php");
+//            URL url = new URL("http://192.168.57.1/UploadToServer.php");
+//            URL url = new URL("http://127.0.0.1/UploadToServer.php");
+//            URL url = new URL("http://10.152.100.35/UploadToServer.php");
+//            URL url = new URL("http://192.168.42.20/UploadToServer.php");
+            URL url = new URL("http://192.168.43.237/UploadToServer.php");
 
             conn = (HttpURLConnection) url.openConnection();
             conn.setDoInput(true); // Allow Inputs
@@ -129,11 +134,11 @@ public class UploadToServer {
         while ((line = in.readLine()) != null) {
             total.append(line).append('\n');
         }
-        System.out.println("uploadFile Server Response is: " + total.toString());
-        String [] result = total.toString().split(":");
-        System.out.println(result[1]);
+        System.out.print("uploadFile Server Response is: " + total.toString());
+        String result = total.toString();
+        System.out.println(result);
 
-        return result[1];
+        return result;
     }
     public static void writeDataToFile(String fileName, double x, double y, double z, String gesture) throws IOException {
         FileWriter writer = null;
@@ -162,6 +167,28 @@ public class UploadToServer {
         finally{
             writer.flush();
             writer.close();
+        }
+    }
+
+    public static Bitmap getBitMapFromUrl(String url){
+        try{
+            URL url1 = new URL(url);
+            HttpURLConnection connection = (HttpURLConnection) url1.openConnection();
+            connection.setDoInput(true);
+            connection.connect();
+            InputStream input = connection.getInputStream();
+            Bitmap myBitmap = BitmapFactory.decodeStream(input);
+            return myBitmap;
+
+        } catch (MalformedURLException e) {
+            e.printStackTrace();
+            return null;
+        } catch (IOException e) {
+            e.printStackTrace();
+            return null;
+        } catch (Exception e){
+            e.printStackTrace();
+            return null;
         }
     }
 }

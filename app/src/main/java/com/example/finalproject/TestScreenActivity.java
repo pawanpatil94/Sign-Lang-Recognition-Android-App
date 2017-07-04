@@ -35,7 +35,7 @@ public class TestScreenActivity extends Activity implements SensorEventListener{
     boolean newGesture = false;
     long lastTime = System.currentTimeMillis();
     final String path = Environment.getExternalStorageDirectory().getAbsolutePath() + "/Movies/";
-    String fileName = "test_dummy.csv";
+    String fileName = "test_dummy2.csv";
     String result;
     SensorManager sensorManager;
     Sensor accelerometer, gyroscope;
@@ -57,7 +57,10 @@ public class TestScreenActivity extends Activity implements SensorEventListener{
 
         super.onCreate(savedInstanceState);
         setContentView(R.layout.testing_screen);
-
+//        TrainScreenActivity.sensorManager.unregisterListener(TestScreenActivity.this);
+        if (TrainScreenActivity.newGesture == true){
+            TrainScreenActivity.newGesture = false;
+        }
         sensorManager = (SensorManager)getSystemService(SENSOR_SERVICE);
         accelerometer = sensorManager.getDefaultSensor(TYPE_ACCELEROMETER);
         gyroscope = sensorManager.getDefaultSensor(TYPE_GYROSCOPE);
@@ -74,9 +77,7 @@ public class TestScreenActivity extends Activity implements SensorEventListener{
         ArrayAdapter<String> adapter = new ArrayAdapter<>(this, android.R.layout.simple_dropdown_item_1line,
                 lettersList);
         chooseLetterDropDown.setAdapter(adapter);
-        chooseLetterDropDown.setSelection(1);
-
-
+        chooseLetterDropDown.setSelection(0);
 
 
         scanButton.setOnClickListener(new View.OnClickListener() {
@@ -87,14 +88,16 @@ public class TestScreenActivity extends Activity implements SensorEventListener{
             }
             else {
                 newGesture = true;
+
                 sensorManager.registerListener(TestScreenActivity.this, accelerometer, SensorManager.SENSOR_DELAY_NORMAL);
-                sensorManager.registerListener(TestScreenActivity.this, gyroscope, SensorManager.SENSOR_DELAY_NORMAL);
+//                sensorManager.registerListener(TestScreenActivity.this, gyroscope, SensorManager.SENSOR_DELAY_NORMAL);
                 gestureRecorded = chooseLetterDropDown.getSelectedItem().toString().toUpperCase();
-                gestureClass.setText(gestureRecorded);
+//                gestureClass.setText(gestureRecorded);
 
                 breakOut = false;
                 final String text = chooseLetterDropDown.getSelectedItem().toString();
                 Log.d("TestScreen", "Selected Value from dropdown: " + text);
+                Toast.makeText(TestScreenActivity.this, path+fileName, Toast.LENGTH_LONG).show();
                 new Thread(new Runnable() {
                             @Override
                             public void run() {
@@ -106,6 +109,8 @@ public class TestScreenActivity extends Activity implements SensorEventListener{
                                     }
                                     try {
                                         result = UploadToServer.uploadToServer(file);
+                                        System.out.println("Result: "+ result);
+//                                        Toast.makeText(TestScreenActivity.this, result, Toast.LENGTH_LONG).show();
                                     }
                                     catch (IOException e) {
                                         e.printStackTrace();
