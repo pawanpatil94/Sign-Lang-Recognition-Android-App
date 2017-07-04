@@ -15,7 +15,7 @@ import java.util.HashSet;
 
 public class MainMenu extends AppCompatActivity {
 
-    private Button trainButton, testButton, tutorialButton, connectButton;
+    private Button trainButton, testButton, tutorialButton;
     final Context context = this;
     static HashSet<String> availableTest = new HashSet<String>();
 
