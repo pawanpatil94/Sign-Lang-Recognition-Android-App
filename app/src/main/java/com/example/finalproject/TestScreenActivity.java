@@ -17,6 +17,12 @@ import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.thalmic.myo.AbstractDeviceListener;
+import com.thalmic.myo.DeviceListener;
+import com.thalmic.myo.Hub;
+import com.thalmic.myo.Myo;
+import com.thalmic.myo.Pose;
+
 import java.io.IOException;
 import java.util.Arrays;
 
@@ -27,7 +33,7 @@ import static android.hardware.Sensor.TYPE_GYROSCOPE;
  * Created by arjun on 6/28/17.
  */
 
-public class TestScreenActivity extends Activity implements SensorEventListener{
+public class TestScreenActivity extends Activity{
     TextView gestureClass;
     boolean breakOut = false;
     boolean newGesture = false;
@@ -41,6 +47,8 @@ public class TestScreenActivity extends Activity implements SensorEventListener{
     private Button scanButton, cancelButton;
     String gestureRecorded;
     String[] lettersList;
+    final private String TAG = "TEST";
+    HubActivity h;
 
     final Handler handler = new Handler() {
         @Override
@@ -56,12 +64,19 @@ public class TestScreenActivity extends Activity implements SensorEventListener{
         super.onCreate(savedInstanceState);
         setContentView(R.layout.testing_screen);
 //        TrainScreenActivity.sensorManager.unregisterListener(TestScreenActivity.this);
+
         if (TrainScreenActivity.newGesture == true){
             TrainScreenActivity.newGesture = false;
         }
+
         sensorManager = (SensorManager)getSystemService(SENSOR_SERVICE);
         accelerometer = sensorManager.getDefaultSensor(TYPE_ACCELEROMETER);
         gyroscope = sensorManager.getDefaultSensor(TYPE_GYROSCOPE);
+
+        h = new HubActivity();
+        h.createHub(this);
+        h.setLockPolicy();
+        h.ontSendData();
 
         scanButton = (Button) findViewById(R.id.scanButton);
         cancelButton = (Button) findViewById(R.id.cancelButton);
@@ -87,7 +102,7 @@ public class TestScreenActivity extends Activity implements SensorEventListener{
             else {
                 newGesture = true;
 
-                sensorManager.registerListener(TestScreenActivity.this, accelerometer, SensorManager.SENSOR_DELAY_NORMAL);
+//                sensorManager.registerListener(TestScreenActivity.this, accelerometer, SensorManager.SENSOR_DELAY_NORMAL);
 //                sensorManager.registerListener(TestScreenActivity.this, gyroscope, SensorManager.SENSOR_DELAY_NORMAL);
                 gestureRecorded = chooseLetterDropDown.getSelectedItem().toString().toUpperCase();
 //                gestureClass.setText(gestureRecorded);
@@ -130,19 +145,50 @@ public class TestScreenActivity extends Activity implements SensorEventListener{
         });
     }
 
-    @Override
-    public void onSensorChanged(SensorEvent event) {
-        if(newGesture) {
-            try {
-                newGesture = false;
-                UploadToServer.writeDataToFile(path + fileName, event.values[0], event.values[1], event.values[2], "0");
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
+//    @Override
+//    public void onSensorChanged(SensorEvent event) {
+//        if(newGesture) {
+//            try {
+//                newGesture = false;
+//                UploadToServer.writeDataToFile(path + fileName, event.values[0], event.values[1], event.values[2], "0");
+//            } catch (IOException e) {
+//                e.printStackTrace();
+//            }
+//        }
+//    }
+//
+//    @Override
+//    public void onAccuracyChanged(Sensor sensor, int accuracy) {
+//    }
+
+    private DeviceListener mListener = new AbstractDeviceListener() {
+        @Override
+        public void onConnect(Myo myo, long timestamp) {
+            Toast.makeText(getApplicationContext(), "Myo Connected!", Toast.LENGTH_SHORT).show();
         }
+
+        @Override
+        public void onDisconnect(Myo myo, long timestamp) {
+            Toast.makeText(getApplicationContext(), "Myo Disconnected!", Toast.LENGTH_SHORT).show();
+        }
+
+        @Override
+        public void onPose(Myo myo, long timestamp, Pose pose) {
+            Toast.makeText(getApplicationContext(), "Pose: " + pose, Toast.LENGTH_SHORT).show();
+
+            //TODO: Do something awesome.
+        }
+    };
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        h.createAndAddListner();
     }
 
     @Override
-    public void onAccuracyChanged(Sensor sensor, int accuracy) {
+    protected void onPause() {
+        super.onPause();
+        Hub.getInstance().removeListener(h.mListener);
     }
 }

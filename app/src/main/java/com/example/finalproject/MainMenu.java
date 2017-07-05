@@ -16,6 +16,9 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
 
+import com.thalmic.myo.Hub;
+import com.thalmic.myo.scanner.ScanActivity;
+
 import java.util.HashMap;
 import java.util.HashSet;
 
@@ -32,22 +35,38 @@ public class MainMenu extends AppCompatActivity implements BluetoothAdapter.LeSc
     private BluetoothGatt mBluetoothGatt;
     private TextView emgDataText;
     private TextView         gestureText;
+    HubActivity h;
+
+    final private String TAG = "MAIN";
 
     public static final int MENU_LIST = 0;
     private Button trainButton, testButton, tutorialButton;
     final Context context = this;
     static HashSet<String> availableTest = new HashSet<String>();
 
+    //private String TAG = "MyO Test";
+    //Context context;
+    //private DeviceListener mListener;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.main_menu);
 
+        h = new HubActivity();
+
+        h.createHub(context);
+        Intent intent = new Intent(context, ScanActivity.class);
+        context.startActivity(intent);
+        h.setLockPolicy();
+        h.ontSendData();
+
+
         testButton = (Button) findViewById(R.id.TestButton);
         tutorialButton = (Button) findViewById(R.id.tutorialButton);
         trainButton = (Button) findViewById(R.id.mainTrain);
 
-        // Re-diect to test screen
+        // Re-direct to test screen
         testButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -56,7 +75,7 @@ public class MainMenu extends AppCompatActivity implements BluetoothAdapter.LeSc
             }
         });
 
-        // Re-diect to tutorial screen
+        // Re-direct to tutorial screen
         tutorialButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -74,6 +93,7 @@ public class MainMenu extends AppCompatActivity implements BluetoothAdapter.LeSc
         });
     }
 
+
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate the menu; this adds items to the action bar if it is present.
@@ -86,7 +106,7 @@ public class MainMenu extends AppCompatActivity implements BluetoothAdapter.LeSc
         int id = item.getItemId();
         switch (id) {
             case MENU_LIST:
-                Intent findDevice = new Intent(context, ListActivity.class);
+                Intent findDevice = new Intent(context, ScanActivity.class);
                 startActivity(findDevice);
                 return true;
         }
@@ -103,4 +123,17 @@ public class MainMenu extends AppCompatActivity implements BluetoothAdapter.LeSc
 
         }
     }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        //h.createAndAddListner();
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        Hub.getInstance().removeListener(h.mListener);
+    }
+
 }

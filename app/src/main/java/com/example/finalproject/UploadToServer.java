@@ -140,18 +140,32 @@ public class UploadToServer {
 
         return result;
     }
-    public static void writeDataToFile(String fileName, double x, double y, double z, String gesture) throws IOException {
+    public static void writeDataToFile(String fileName, double x1, double y1, double z1, double x2, double y2, double z2, double x3, double y3, double z3,  String gesture) throws IOException {
         FileWriter writer = null;
 
         try{
             writer = new FileWriter(new File(fileName), true);
             writer.append(new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(new Date()));
             writer.append(',');
-            writer.append(String.valueOf(x));
+            writer.append(String.valueOf(x1));
             writer.append(',');
-            writer.append(String.valueOf(y));
+            writer.append(String.valueOf(y1));
             writer.append(',');
-            writer.append(String.valueOf(z));
+            writer.append(String.valueOf(z1));
+
+            writer.append(',');
+            writer.append(String.valueOf(x2));
+            writer.append(',');
+            writer.append(String.valueOf(y2));
+            writer.append(',');
+            writer.append(String.valueOf(z2));
+
+            writer.append(',');
+            writer.append(String.valueOf(x3));
+            writer.append(',');
+            writer.append(String.valueOf(y3));
+            writer.append(',');
+            writer.append(String.valueOf(z3));
 
             if(!gesture.equals("0")) {
                 writer.append(',');

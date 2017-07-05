@@ -3,9 +3,8 @@ package com.example.finalproject;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.hardware.Sensor;
-import android.hardware.SensorEvent;
-import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
+import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
@@ -14,10 +13,13 @@ import android.support.v7.app.AppCompatActivity;
 import android.view.View;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
-import android.widget.ImageView;
 import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
+import android.widget.VideoView;
+
+import com.thalmic.myo.DeviceListener;
+import com.thalmic.myo.Hub;
 
 import java.io.IOException;
 
@@ -28,7 +30,7 @@ import static android.hardware.Sensor.TYPE_GYROSCOPE;
  * Created by pawan on 7/2/17.
  */
 
-public class TrainScreenActivity extends AppCompatActivity implements SensorEventListener{
+public class TrainScreenActivity extends AppCompatActivity{
     Button trainButton, cancelButton;
     Context context;
     Spinner chooseLetterDropDown;
@@ -36,13 +38,16 @@ public class TrainScreenActivity extends AppCompatActivity implements SensorEven
     Sensor accelerometer, gyroscope;
     static boolean newGesture = false;
     TextView gestureClass;
-    ImageView trainImage;
+    TextView mTextView;
+    VideoView trainVideo;
     String sensorName, gestureRecorded;
     String path = Environment.getExternalStorageDirectory().getAbsolutePath() + "/Movies/";
 //    String path = "/storage/";
     String fileName = "train_dummy.csv";
     Bitmap bitmap;
     String [] letterList;
+    private DeviceListener mListener;
+    HubActivity h;
 
     final Handler handler = new Handler() {
         @Override
@@ -63,12 +68,17 @@ public class TrainScreenActivity extends AppCompatActivity implements SensorEven
         sensorManager = (SensorManager)getSystemService(SENSOR_SERVICE);
         accelerometer = sensorManager.getDefaultSensor(TYPE_ACCELEROMETER);
         gyroscope = sensorManager.getDefaultSensor(TYPE_GYROSCOPE);//
+        h = new HubActivity();
+        h.createHub(this);
+        h.setLockPolicy();
+        h.ontSendData();
 
         trainButton = (Button) findViewById(R.id.trainButton);
         cancelButton = (Button) findViewById(R.id.trainCancel);
         chooseLetterDropDown = (Spinner) findViewById(R.id.train_spinner);
         gestureClass = (TextView)findViewById(R.id.trainGesture);
-        trainImage = (ImageView) findViewById(R.id.imageView);
+        trainVideo = (VideoView) findViewById(R.id.videoView);
+        mTextView = (TextView) findViewById(R.id.mTextView);
 
         // https://stackoverflow.com/questions/13377361/how-to-create-a-drop-down-list
         letterList = new String("ABCDEFGHIJKLMNOPQRSTUVWXYZ").split("");
@@ -81,10 +91,26 @@ public class TrainScreenActivity extends AppCompatActivity implements SensorEven
             public void onClick(View v) {
                 newGesture = true;
                 MainMenu.availableTest.add(chooseLetterDropDown.getSelectedItem().toString());
-                sensorManager.registerListener(TrainScreenActivity.this, accelerometer, SensorManager.SENSOR_DELAY_NORMAL);
+//                sensorManager.registerListener(TrainScreenActivity.this, accelerometer, SensorManager.SENSOR_DELAY_NORMAL);
                 gestureRecorded = chooseLetterDropDown.getSelectedItem().toString().toUpperCase();
 
-                setPhoto(trainImage, gestureRecorded);
+                new Handler().postDelayed(new Runnable() {
+                    @Override
+                    public void run() {
+
+                        try {
+                            UploadToServer.writeDataToFile(path + fileName, h.accelX, h.accelY, h.accelZ, h.gyroX, h.gyroY, h.gyroZ, h.orientX, h.orientY, h.orientZ, gestureRecorded);
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
+                    }
+                }, 1000);
+
+                String url = "http://192.168.43.237/uploads/vids/" + gestureRecorded +".mp4";
+//                String url = "https://archive.org/download/ksnn_compilation_master_the_internet/ksnn_compilation_master_the_internet_512kb.mp4";
+                trainVideo.setVideoURI(Uri.parse(url));
+                trainVideo.start();
+                //setPhoto(trainImage, gestureRecorded);
             }
         });
 
@@ -92,84 +118,140 @@ public class TrainScreenActivity extends AppCompatActivity implements SensorEven
             @Override
             public void onClick(View v) {
                 newGesture = false;
-                sensorManager.unregisterListener(TrainScreenActivity.this);
+                //ensorManager.unregisterListener(TrainScreenActivity.this);
             }
         });
     }
 
-    private void setPhoto(ImageView image, String gestureRecorded) {
-        switch(gestureRecorded){
-            case "A": image.setImageResource(R.drawable.a);
-                break;
-            case "B": image.setImageResource(R.drawable.b);
-                break;
-            case "C": image.setImageResource(R.drawable.c);
-                break;
-            case "D": image.setImageResource(R.drawable.d);
-                break;
-            case "E": image.setImageResource(R.drawable.e);
-                break;
-            case "F": image.setImageResource(R.drawable.f);
-                break;
-            case "G": image.setImageResource(R.drawable.g);
-                break;
-            case "H": image.setImageResource(R.drawable.h);
-                break;
-            case "I": image.setImageResource(R.drawable.i);
-                break;
-            case "J": image.setImageResource(R.drawable.j);
-                break;
-            case "K": image.setImageResource(R.drawable.k);
-                break;
-            case "L": image.setImageResource(R.drawable.l);
-                break;
-            case "M": image.setImageResource(R.drawable.m);
-                break;
-            case "N": image.setImageResource(R.drawable.n);
-                break;
-            case "O": image.setImageResource(R.drawable.o);
-                break;
-            case "P": image.setImageResource(R.drawable.p);
-                break;
-            case "Q": image.setImageResource(R.drawable.q);
-                break;
-            case "R": image.setImageResource(R.drawable.r);
-                break;
-            case "S": image.setImageResource(R.drawable.s);
-                break;
-            case "T": image.setImageResource(R.drawable.t);
-                break;
-            case "U": image.setImageResource(R.drawable.u);
-                break;
-            case "V": image.setImageResource(R.drawable.v);
-                break;
-            case "W": image.setImageResource(R.drawable.w);
-                break;
-            case "X": image.setImageResource(R.drawable.x);
-                break;
-            case "Y": image.setImageResource(R.drawable.y);
-                break;
-            case "Z": image.setImageResource(R.drawable.z);
-                break;
-            default:break;
-        }
+//    private void createAndAddListner() {
+//
+//        mListener = new AbstractDeviceListener() {
+//            @Override
+//            public void onConnect(Myo myo, long timestamp) {
+//                Toast.makeText(context, "Myo Connected!", Toast.LENGTH_SHORT).show();
+//            }
+//
+//            @Override
+//            public void onDisconnect(Myo myo, long timestamp) {
+//                Toast.makeText(context, "Myo Disconnected!", Toast.LENGTH_SHORT).show();
+//            }
+//
+//            @Override
+//            public void onPose(Myo myo, long timestamp, Pose pose) {
+//                switch (pose) {
+//                    case REST:
+//                        Toast.makeText(context, "REST", Toast.LENGTH_SHORT).show();
+//                        break;
+//                    case FIST:
+//                        Toast.makeText(context, "FIST", Toast.LENGTH_SHORT).show();
+//                        break;
+//                    case WAVE_IN:
+//                        Toast.makeText(context, "WAVE_IN", Toast.LENGTH_SHORT).show();
+//                        break;
+//                    case WAVE_OUT:
+//                        Toast.makeText(context, "WAVE_OUT", Toast.LENGTH_SHORT).show();
+//                        break;
+//                    case FINGERS_SPREAD:
+//                        Toast.makeText(context, "FINGERS_SPREAD", Toast.LENGTH_SHORT).show();
+//                        break;
+//                    case DOUBLE_TAP:
+//                        Toast.makeText(context, "DOUBLE_TAP", Toast.LENGTH_SHORT).show();
+//                        break;
+//                    case UNKNOWN:
+//                        Toast.makeText(context, "UNKNOWN", Toast.LENGTH_SHORT).show();
+//                        break;
+//                }
+//            }
+//        };
+//
+//        Hub.getInstance().addListener(mListener);
+//    }
+
+//    private void setPhoto(ImageView image, String gestureRecorded) {
+//        switch(gestureRecorded){
+//            case "A": image.setImageResource(R.drawable.a);
+//                break;
+//            case "B": image.setImageResource(R.drawable.b);
+//                break;
+//            case "C": image.setImageResource(R.drawable.c);
+//                break;
+//            case "D": image.setImageResource(R.drawable.d);
+//                break;
+//            case "E": image.setImageResource(R.drawable.e);
+//                break;
+//            case "F": image.setImageResource(R.drawable.f);
+//                break;
+//            case "G": image.setImageResource(R.drawable.g);
+//                break;
+//            case "H": image.setImageResource(R.drawable.h);
+//                break;
+//            case "I": image.setImageResource(R.drawable.i);
+//                break;
+//            case "J": image.setImageResource(R.drawable.j);
+//                break;
+//            case "K": image.setImageResource(R.drawable.k);
+//                break;
+//            case "L": image.setImageResource(R.drawable.l);
+//                break;
+//            case "M": image.setImageResource(R.drawable.m);
+//                break;
+//            case "N": image.setImageResource(R.drawable.n);
+//                break;
+//            case "O": image.setImageResource(R.drawable.o);
+//                break;
+//            case "P": image.setImageResource(R.drawable.p);
+//                break;
+//            case "Q": image.setImageResource(R.drawable.q);
+//                break;
+//            case "R": image.setImageResource(R.drawable.r);
+//                break;
+//            case "S": image.setImageResource(R.drawable.s);
+//                break;
+//            case "T": image.setImageResource(R.drawable.t);
+//                break;
+//            case "U": image.setImageResource(R.drawable.u);
+//                break;
+//            case "V": image.setImageResource(R.drawable.v);
+//                break;
+//            case "W": image.setImageResource(R.drawable.w);
+//                break;
+//            case "X": image.setImageResource(R.drawable.x);
+//                break;
+//            case "Y": image.setImageResource(R.drawable.y);
+//                break;
+//            case "Z": image.setImageResource(R.drawable.z);
+//                break;
+//            default:break;
+//        }
+//    }
+
+//    @Override
+//    public void onSensorChanged(SensorEvent event) {
+//        sensorName = event.sensor.getName();
+////        handler.sendEmptyMessage(0);
+//        try {
+//            if(newGesture) {
+//                UploadToServer.writeDataToFile(path + fileName, event.values[0], event.values[1], event.values[2], gestureRecorded);
+//            }
+//        } catch (IOException e) {
+//            e.printStackTrace();
+//        }
+//    }
+//
+//    @Override
+//    public void onAccuracyChanged(Sensor sensor, int accuracy) {
+//
+//    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        h.createAndAddListner();
     }
 
     @Override
-    public void onSensorChanged(SensorEvent event) {
-        sensorName = event.sensor.getName();
-//        handler.sendEmptyMessage(0);
-        try {
-            if(newGesture) {
-                UploadToServer.writeDataToFile(path + fileName, event.values[0], event.values[1], event.values[2], gestureRecorded);
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-
-    @Override
-    public void onAccuracyChanged(Sensor sensor, int accuracy) {
-
+    protected void onPause() {
+        super.onPause();
+        Hub.getInstance().removeListener(h.mListener);
     }
 }
