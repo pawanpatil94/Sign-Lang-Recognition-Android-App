@@ -37,7 +37,7 @@ public class TestScreenActivity extends Activity{
     TextView gestureClass;
     boolean breakOut = false;
     boolean newGesture = false;
-    long lastTime = System.currentTimeMillis();
+//    long lastTime = System.currentTimeMillis();
     final String path = Environment.getExternalStorageDirectory().getAbsolutePath() + "/Movies/";
     String fileName = "test_dummy2.csv";
     String result;
@@ -47,7 +47,7 @@ public class TestScreenActivity extends Activity{
     private Button scanButton, cancelButton;
     String gestureRecorded;
     String[] lettersList;
-    final private String TAG = "TEST";
+//    final private String TAG = "TEST";
     HubActivity h;
 
     final Handler handler = new Handler() {
@@ -63,7 +63,6 @@ public class TestScreenActivity extends Activity{
 
         super.onCreate(savedInstanceState);
         setContentView(R.layout.testing_screen);
-//        TrainScreenActivity.sensorManager.unregisterListener(TestScreenActivity.this);
 
         if (TrainScreenActivity.newGesture == true){
             TrainScreenActivity.newGesture = false;
@@ -101,16 +100,24 @@ public class TestScreenActivity extends Activity{
             }
             else {
                 newGesture = true;
-
-//                sensorManager.registerListener(TestScreenActivity.this, accelerometer, SensorManager.SENSOR_DELAY_NORMAL);
-//                sensorManager.registerListener(TestScreenActivity.this, gyroscope, SensorManager.SENSOR_DELAY_NORMAL);
                 gestureRecorded = chooseLetterDropDown.getSelectedItem().toString().toUpperCase();
-//                gestureClass.setText(gestureRecorded);
 
                 breakOut = false;
                 final String text = chooseLetterDropDown.getSelectedItem().toString();
                 Log.d("TestScreen", "Selected Value from dropdown: " + text);
                 Toast.makeText(TestScreenActivity.this, path+fileName, Toast.LENGTH_LONG).show();
+                new Handler().postDelayed(new Runnable() {
+                    @Override
+                    public void run() {
+
+                        try {
+                            UploadToServer.writeDataToFile(path + fileName, h.accelX, h.accelY, h.accelZ,
+                                    h.gyroX, h.gyroY, h.gyroZ, h.orientX, h.orientY, h.orientZ, "0");
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
+                    }
+                }, 1000);
                 new Thread(new Runnable() {
                             @Override
                             public void run() {
@@ -144,41 +151,6 @@ public class TestScreenActivity extends Activity{
             }
         });
     }
-
-//    @Override
-//    public void onSensorChanged(SensorEvent event) {
-//        if(newGesture) {
-//            try {
-//                newGesture = false;
-//                UploadToServer.writeDataToFile(path + fileName, event.values[0], event.values[1], event.values[2], "0");
-//            } catch (IOException e) {
-//                e.printStackTrace();
-//            }
-//        }
-//    }
-//
-//    @Override
-//    public void onAccuracyChanged(Sensor sensor, int accuracy) {
-//    }
-
-    private DeviceListener mListener = new AbstractDeviceListener() {
-        @Override
-        public void onConnect(Myo myo, long timestamp) {
-            Toast.makeText(getApplicationContext(), "Myo Connected!", Toast.LENGTH_SHORT).show();
-        }
-
-        @Override
-        public void onDisconnect(Myo myo, long timestamp) {
-            Toast.makeText(getApplicationContext(), "Myo Disconnected!", Toast.LENGTH_SHORT).show();
-        }
-
-        @Override
-        public void onPose(Myo myo, long timestamp, Pose pose) {
-            Toast.makeText(getApplicationContext(), "Pose: " + pose, Toast.LENGTH_SHORT).show();
-
-            //TODO: Do something awesome.
-        }
-    };
 
     @Override
     protected void onResume() {

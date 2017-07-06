@@ -24,9 +24,9 @@ public class HubActivity {
     private String TAG = "MyO Test";
     Context context;
     DeviceListener mListener;
-    float accelX, accelY, accelZ;
-    float gyroX, gyroY, gyroZ;
-    float orientX, orientY, orientZ;
+    static float accelX, accelY, accelZ;
+    static float gyroX, gyroY, gyroZ;
+    static float orientX, orientY, orientZ;
 
      void createHub(Context mContext) {
         Hub hub = Hub.getInstance();
