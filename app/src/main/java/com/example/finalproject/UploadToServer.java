@@ -205,4 +205,26 @@ public class UploadToServer {
             return null;
         }
     }
+
+    public static void writeEMGToFile(String fileName, String emg, Boolean check) throws IOException {
+        FileWriter writer = null;
+
+        try{
+            writer = new FileWriter(new File(fileName), check);
+            writer.append(new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(new Date()));
+            writer.append(',');
+
+                writer.append(emg);
+            writer.append('\n');
+
+            System.out.println("CSV file is created...");
+        }
+        catch (IOException e) {
+            e.printStackTrace();
+        }
+        finally{
+            writer.flush();
+            writer.close();
+        }
+    }
 }

@@ -5,139 +5,135 @@ package com.example.finalproject;
  */
 
 import android.content.Context;
-import android.content.Intent;
+import android.os.Handler;
 import android.util.Log;
 import android.widget.Toast;
 
-import com.thalmic.myo.AbstractDeviceListener;
-import com.thalmic.myo.DeviceListener;
-import com.thalmic.myo.Hub;
-import com.thalmic.myo.Myo;
-import com.thalmic.myo.Pose;
-import com.thalmic.myo.Quaternion;
-import com.thalmic.myo.Vector3;
-import com.thalmic.myo.XDirection;
-import com.thalmic.myo.scanner.ScanActivity;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+
+import eu.darken.myolib.BaseMyo;
+import eu.darken.myolib.Myo;
+import eu.darken.myolib.MyoCmds;
+import eu.darken.myolib.MyoConnector;
+import eu.darken.myolib.processor.emg.EmgData;
+import eu.darken.myolib.processor.emg.EmgProcessor;
+import eu.darken.myolib.processor.imu.ImuData;
+import eu.darken.myolib.processor.imu.ImuProcessor;
 
 public class HubActivity {
 
-    private String TAG = "MyO Test";
-    Context context;
-    DeviceListener mListener;
-    static float accelX, accelY, accelZ;
-    static float gyroX, gyroY, gyroZ;
-    static float orientX, orientY, orientZ;
+    private MyoConnector mMyoConnector;
+    private ImuProcessor mImuProcessor;
+    private EmgProcessor mEmgProcessor;
+    public Myo CurrentMyo;
+    boolean myoConnection = false, isMyoConnected = false;
+    public boolean WriteMode = false;
+    private Handler mHandler;
+    public long lastUpdated;
+    String train = "train.csv", test = "test.csv";
 
-     void createHub(Context mContext) {
-        Hub hub = Hub.getInstance();
-         context = mContext;
-        if (!hub.init(context)) {
-            Log.e(TAG, "Could not initialize the Hub.");
-            return;
-        }
+    String orientationData;
+
+    Boolean isTested = false;
+    int i = 0;
+
+    private List<Integer> roll = new ArrayList<Integer>();
+    private List<Integer> yaw = new ArrayList<Integer>();
+    private List<Integer> pitch = new ArrayList<Integer>();
+
+    void start_myo(Context mContext) {
+        mHandler = new Handler();
+        mMyoConnector = new MyoConnector(mContext);
+        mMyoConnector.scan(5000, mScannerCallback);
+        myoConnection = true;
+        Toast.makeText(mContext,"Myo connected", Toast.LENGTH_LONG);
+        //tv.setText("Myo Connected");
     }
 
-     void scanFordevice() {
-        Intent intent = new Intent(context, ScanActivity.class);
-        context.startActivity(intent);
-    }
-
-     void setLockPolicy() {
-        Hub.getInstance().setLockingPolicy(Hub.LockingPolicy.NONE);
-    }
-
-     void createAndAddListner() {
-
-        mListener = new AbstractDeviceListener() {
-            @Override
-            public void onConnect(Myo myo, long timestamp) {
-                Toast.makeText(context, "Myo Connected!", Toast.LENGTH_SHORT).show();
+    public MyoConnector.ScannerCallback mScannerCallback = new MyoConnector.ScannerCallback() {
+        @Override
+        public void onScanFinished(final List<Myo> myos) {
+            if (mHandler == null) {
+                return;
             }
+            mHandler.post(new Runnable() {
+                @Override
+                public void run() {
 
-            @Override
-            public void onDisconnect(Myo myo, long timestamp) {
-                Toast.makeText(context, "Myo Disconnected!", Toast.LENGTH_SHORT).show();
-            }
+                    for (final Myo myo : myos) {
 
-            @Override
-            public void onPose(Myo myo, long timestamp, Pose pose) {
-                switch (pose) {
-                    case REST:
-                        Toast.makeText(context, "REST", Toast.LENGTH_SHORT).show();
-                        break;
-                    case FIST:
-                        Toast.makeText(context, "FIST", Toast.LENGTH_SHORT).show();
-                        break;
-                    case WAVE_IN:
-                        Toast.makeText(context, "WAVE_IN", Toast.LENGTH_SHORT).show();
-                        break;
-                    case WAVE_OUT:
-                        Toast.makeText(context, "WAVE_OUT", Toast.LENGTH_SHORT).show();
-                        break;
-                    case FINGERS_SPREAD:
-                        Toast.makeText(context, "FINGERS_SPREAD", Toast.LENGTH_SHORT).show();
-                        break;
-                    case DOUBLE_TAP:
-                        Toast.makeText(context, "DOUBLE_TAP", Toast.LENGTH_SHORT).show();
-                        break;
-                    case UNKNOWN:
-                        Toast.makeText(context, "UNKNOWN", Toast.LENGTH_SHORT).show();
-                        break;
+                        //if (myo.getDeviceAddress().equals(DeviceAddress)) {
+
+                        CurrentMyo = myo;
+                        Log.d("MYO","Myo Connected");
+                        isMyoConnected = true;
+                        myo.connect();
+                        myo.setConnectionSpeed(BaseMyo.ConnectionSpeed.HIGH);
+                        myo.writeSleepMode(MyoCmds.SleepMode.NEVER, null);
+                        myo.writeMode(MyoCmds.EmgMode.FILTERED, MyoCmds.ImuMode.RAW,
+                                MyoCmds.ClassifierMode.DISABLED, null);
+                        myo.writeUnlock(MyoCmds.UnlockType.HOLD, null);
+                        //myo.readBatteryLevel(MainActivity.this);
+                        mImuProcessor = new ImuProcessor();
+                        myo.addProcessor(mImuProcessor);
+
+                        mImuProcessor.addListener(new ImuProcessor.ImuDataListener() {
+                            @Override
+                            public void onNewImuData(ImuData imuData) {
+                                if (WriteMode) {
+                                    orientationData = Double.valueOf(imuData.getOrientationData()[0]).toString()
+                                            + "," +
+                                            Double.valueOf(imuData.getOrientationData()[1]).toString() + "," +
+                                            Double.valueOf(imuData.getOrientationData()[2]).toString() + "," +
+                                            Double.valueOf(imuData.getOrientationData()[3]).toString();
+                                }
+
+                            }
+                        });
+
+                        mEmgProcessor = new EmgProcessor();
+                        myo.addProcessor(mEmgProcessor);
+                        mEmgProcessor.addListener(new EmgProcessor.EmgDataListener() {
+                            @Override
+                            public void onNewEmgData(EmgData emgData) {
+//                                if (WriteMode && System.currentTimeMillis() - lastUpdated > 499) {
+                                    while (i < 50 && WriteMode == true) {
+                                        if (WriteMode && System.currentTimeMillis() - lastUpdated > 499){
+                                        i++;
+                                        if(i>=50){
+                                            WriteMode = false;
+                                            i = 0;
+                                        }
+                                        try {
+                                            UploadToServer.writeEMGToFile(TrainScreenActivity.path +
+                                                            (isTested == true ? test : train),
+                                                    (Byte.valueOf(emgData.getData()[0])).toString() + "," +
+                                                            (Byte.valueOf(emgData.getData()[1])).toString() + "," +
+                                                            (Byte.valueOf(emgData.getData()[2])).toString() + "," +
+                                                            (Byte.valueOf(emgData.getData()[3])).toString() + "," +
+                                                            (Byte.valueOf(emgData.getData()[4])).toString() + "," +
+                                                            (Byte.valueOf(emgData.getData()[5])).toString() + "," +
+                                                            (Byte.valueOf(emgData.getData()[6])).toString() + "," +
+                                                            (Byte.valueOf(emgData.getData()[7])).toString() + "," +
+                                                            orientationData + "," +
+                                                            TrainScreenActivity.gestureRecorded, !isTested);
+                                        } catch (IOException e) {
+                                            e.printStackTrace();
+                                        }
+                                        if (isTested)
+                                            WriteMode = false;
+                                        lastUpdated = System.currentTimeMillis();
+                                    }
+                                }
+                            }
+                        });
+                    }
                 }
-            }
-
-            @Override
-            public void onAccelerometerData(Myo myo, long timestamp, Vector3 accel) {
-                accelX = (float) accel.x();
-                accelY = (float) accel.y();
-                accelZ = (float) accel.z();
-
-//                Toast.makeText(context, "Accel X: "+x+"Y: "+y+"Z: "+z, Toast.LENGTH_LONG).show();
-
-            }
-
-            @Override
-            public void onGyroscopeData(Myo myo, long timestamp, Vector3 gyro) {
-                gyroX = (float) gyro.x();
-                gyroY = (float) gyro.y();
-                gyroZ = (float) gyro.z();
-
-//               Toast.makeText(context, "Gyro X: "+x+"Y: "+y+"Z: "+z, Toast.LENGTH_LONG).show();
-
-            }
-
-
-            @Override
-            public void onOrientationData(Myo myo, long timestamp, Quaternion rotation){
-                orientX = (float) Math.toDegrees(Quaternion.roll(rotation));
-                orientY = (float) Math.toDegrees(Quaternion.pitch(rotation));
-                orientZ = (float) Math.toDegrees(Quaternion.yaw(rotation));
-
-                if (myo.getXDirection() == XDirection.TOWARD_ELBOW) {
-                    orientX *= -1;
-                    orientY *= -1;
-                }
-            }
-        };
-
-        Hub.getInstance().addListener(mListener);
-    }
-
-     void ontSendData() {
-        if (Hub.getInstance().isSendingUsageData()) {
-            Hub.getInstance().setSendUsageData(false);
+            });
         }
-    }
 
-    public float[] getData(String sensorName){
-        if(sensorName.equals("A")){
-            return new float[]{accelX, accelY, accelZ};
-        }
-        else if(sensorName.equals("G")){
-            return new float[]{gyroX, gyroY, gyroZ};
-        }
-        else {
-            return new float[]{orientX, orientY, orientZ};
-        }
-    }
+    };
+
 }

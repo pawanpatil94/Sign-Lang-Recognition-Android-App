@@ -7,10 +7,10 @@
         android:id="@+id/tutorialButton"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:text="Tutorial"
         android:layout_alignParentTop="true"
         android:layout_centerHorizontal="true"
-        android:layout_marginTop="113dp"
-        android:text="Tutorial" />
+        android:layout_marginTop="134dp" />
 
     <Button
         android:id="@+id/TestButton"
@@ -19,25 +19,14 @@
         android:text="Test"
         android:layout_below="@+id/mainTrain"
         android:layout_alignStart="@+id/mainTrain"
-        android:layout_marginTop="62dp" />
+        android:layout_marginTop="32dp" />
 
     <Button
         android:id="@+id/mainTrain"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_alignLeft="@+id/tutorialButton"
-        android:layout_alignStart="@+id/tutorialButton"
-        android:layout_below="@+id/tutorialButton"
-        android:layout_marginTop="57dp"
-        android:text="Train" />
-
-    <Button
-        android:id="@+id/connect"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_alignParentTop="true"
-        android:layout_alignStart="@+id/tutorialButton"
-        android:layout_marginTop="36dp"
-        android:text="Connect" />
+        android:text="Train"
+        android:layout_centerVertical="true"
+        android:layout_alignEnd="@+id/tutorialButton" />
 
 </RelativeLayout>

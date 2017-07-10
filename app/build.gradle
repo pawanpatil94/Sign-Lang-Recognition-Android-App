@@ -25,6 +25,12 @@ repositories {
     }
 }
 
+repositories {
+    maven {
+        url 'https://dl.bintray.com/darken/maven/'
+    }
+}
+
 dependencies {
     compile fileTree(dir: 'libs', include: ['*.jar'])
     androidTestCompile('com.android.support.test.espresso:espresso-core:2.2.2', {
@@ -33,5 +39,7 @@ dependencies {
     compile 'com.android.support:appcompat-v7:25.3.1'
     compile 'com.android.support:design:25.3.1'
     compile('com.thalmic:myosdk:0.10.+@aar')
+    compile 'eu.darken.myolib:myolib:0.0.4'
+    //compile 'com.echo:holographlibrary:1.0'
     testCompile 'junit:junit:4.12'
 }

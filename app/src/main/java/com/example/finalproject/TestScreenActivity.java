@@ -1,15 +1,13 @@
 package com.example.finalproject;
 
 import android.app.Activity;
+import android.content.Context;
 import android.hardware.Sensor;
-import android.hardware.SensorEvent;
-import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
 import android.os.Message;
-import android.util.Log;
 import android.view.View;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
@@ -17,21 +15,12 @@ import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.thalmic.myo.AbstractDeviceListener;
-import com.thalmic.myo.DeviceListener;
-import com.thalmic.myo.Hub;
-import com.thalmic.myo.Myo;
-import com.thalmic.myo.Pose;
-
 import java.io.IOException;
 import java.util.Arrays;
 
-import static android.hardware.Sensor.TYPE_ACCELEROMETER;
-import static android.hardware.Sensor.TYPE_GYROSCOPE;
+import eu.darken.myolib.MyoCmds;
+import eu.darken.myolib.MyoConnector;
 
-/**
- * Created by arjun on 6/28/17.
- */
 
 public class TestScreenActivity extends Activity{
     TextView gestureClass;
@@ -39,22 +28,29 @@ public class TestScreenActivity extends Activity{
     boolean newGesture = false;
 //    long lastTime = System.currentTimeMillis();
     final String path = Environment.getExternalStorageDirectory().getAbsolutePath() + "/Movies/";
-    String fileName = "test_dummy2.csv";
+    String fileName = "test.csv";
     String result;
-    SensorManager sensorManager;
-    Sensor accelerometer, gyroscope;
     private Spinner chooseLetterDropDown;
     private Button scanButton, cancelButton;
     String gestureRecorded;
     String[] lettersList;
-//    final private String TAG = "TEST";
+    Context context = this;
+    boolean myoConnection = false;
+    MyoConnector mMyoConnector;
     HubActivity h;
 
     final Handler handler = new Handler() {
         @Override
         public void handleMessage(Message msg){
+
             gestureClass = (TextView) findViewById(R.id.gestureClass);
-            gestureClass.setText(result);
+            if(msg.what == 0) {
+                gestureClass.setText(result);
+                Toast.makeText(TestScreenActivity.this, "Wrote", Toast.LENGTH_SHORT).show();
+            }
+            else{
+                gestureClass.setText("Ready");
+            }
         }
     };
 
@@ -68,14 +64,11 @@ public class TestScreenActivity extends Activity{
             TrainScreenActivity.newGesture = false;
         }
 
-        sensorManager = (SensorManager)getSystemService(SENSOR_SERVICE);
-        accelerometer = sensorManager.getDefaultSensor(TYPE_ACCELEROMETER);
-        gyroscope = sensorManager.getDefaultSensor(TYPE_GYROSCOPE);
 
+        //Start Myo reading here
         h = new HubActivity();
-        h.createHub(this);
-        h.setLockPolicy();
-        h.ontSendData();
+        h.start_myo(context);
+        h.isTested = false;
 
         scanButton = (Button) findViewById(R.id.scanButton);
         cancelButton = (Button) findViewById(R.id.cancelButton);
@@ -83,63 +76,54 @@ public class TestScreenActivity extends Activity{
         gestureClass = (TextView) findViewById(R.id.gestureClass);
 
         // https://stackoverflow.com/questions/13377361/how-to-create-a-drop-down-list
-        lettersList = MainMenu.availableTest.toArray(new String[MainMenu.availableTest.size()]);
+//        lettersList = MainMenu.availableTest.toArray(new String[MainMenu.availableTest.size()]);
+        lettersList = new String("AEIOU").split("");
         Arrays.sort(lettersList);
 
         ArrayAdapter<String> adapter = new ArrayAdapter<>(this, android.R.layout.simple_dropdown_item_1line,
                 lettersList);
         chooseLetterDropDown.setAdapter(adapter);
-        chooseLetterDropDown.setSelection(0);
-
+        chooseLetterDropDown.setSelection(1);
 
         scanButton.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-            if(lettersList.length == 0 || lettersList == null) {
-                Toast.makeText(TestScreenActivity.this, "Please run train module!", Toast.LENGTH_LONG).show();
-            }
-            else {
+//            if(lettersList.length == 0 || lettersList == null) {
+//                Toast.makeText(TestScreenActivity.this, "Please run train module!", Toast.LENGTH_LONG).show();
+//            }
+//            else {
                 newGesture = true;
-                gestureRecorded = chooseLetterDropDown.getSelectedItem().toString().toUpperCase();
+                //gestureRecorded = chooseLetterDropDown.getSelectedItem().toString().toUpperCase();
 
                 breakOut = false;
-                final String text = chooseLetterDropDown.getSelectedItem().toString();
-                Log.d("TestScreen", "Selected Value from dropdown: " + text);
-                Toast.makeText(TestScreenActivity.this, path+fileName, Toast.LENGTH_LONG).show();
-                new Handler().postDelayed(new Runnable() {
-                    @Override
-                    public void run() {
+//                final String text = chooseLetterDropDown.getSelectedItem().toString();
+               // Log.d("TestScreen", "Selected Value from dropdown: " + text);
+//                Toast.makeText(TestScreenActivity.this, path+fileName, Toast.LENGTH_LONG).show();
+                h.lastUpdated = System.currentTimeMillis();
+                h.WriteMode = true;
+                h.isTested = true;
 
-                        try {
-                            UploadToServer.writeDataToFile(path + fileName, h.accelX, h.accelY, h.accelZ,
-                                    h.gyroX, h.gyroY, h.gyroZ, h.orientX, h.orientY, h.orientZ, "0");
-                        } catch (IOException e) {
-                            e.printStackTrace();
-                        }
-                    }
-                }, 1000);
-                new Thread(new Runnable() {
+                    new Thread(new Runnable() {
                             @Override
                             public void run() {
+//                                try {
+//                                    UploadToServer.uploadToServer(path+"train.csv");
+//                                } catch (IOException e) {
+//                                    e.printStackTrace();
+//                                }
+                                breakOut = false;
                                 String file = path + fileName;
-                                Log.d("TestScreen", "Selected Value from dropdown: " + text);
-                                while (true) {
-                                    if (breakOut) {
-                                        break;
-                                    }
+
                                     try {
                                         result = UploadToServer.uploadToServer(file);
-                                        System.out.println("Result: "+ result);
-//                                        Toast.makeText(TestScreenActivity.this, result, Toast.LENGTH_LONG).show();
+                                        handler.sendEmptyMessage(0);
                                     }
                                     catch (IOException e) {
                                         e.printStackTrace();
                                     }
-                                    handler.sendEmptyMessage(0);
+
                                 }
-                            }
                         }).start();
-                    }
                 }
             });
 
@@ -148,19 +132,31 @@ public class TestScreenActivity extends Activity{
             public void onClick(View v) {
                 breakOut = true;
                 newGesture = false;
+                h.WriteMode = false;
+                h.isTested = false;
+
+                handler.sendEmptyMessage(1);
             }
         });
     }
 
     @Override
     protected void onResume() {
+        if(myoConnection) {
+            mMyoConnector.scan(5000, h.mScannerCallback);
+        }
+
         super.onResume();
-        h.createAndAddListner();
     }
 
     @Override
     protected void onPause() {
+//        myoConnection = true;
+        if(myoConnection) {
+            h.CurrentMyo.writeSleepMode(MyoCmds.SleepMode.NORMAL, null);
+            h.CurrentMyo.writeMode(MyoCmds.EmgMode.NONE, MyoCmds.ImuMode.NONE, MyoCmds.ClassifierMode.DISABLED, null);
+            h.CurrentMyo.disconnect();
+        }
         super.onPause();
-        Hub.getInstance().removeListener(h.mListener);
     }
 }
