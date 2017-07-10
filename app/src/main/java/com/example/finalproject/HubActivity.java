@@ -46,10 +46,8 @@ public class HubActivity {
     void start_myo(Context mContext) {
         mHandler = new Handler();
         mMyoConnector = new MyoConnector(mContext);
-        mMyoConnector.scan(5000, mScannerCallback);
+        mMyoConnector.scan(2000, mScannerCallback);
         myoConnection = true;
-        Toast.makeText(mContext,"Myo connected", Toast.LENGTH_LONG);
-        //tv.setText("Myo Connected");
     }
 
     public MyoConnector.ScannerCallback mScannerCallback = new MyoConnector.ScannerCallback() {
@@ -64,20 +62,17 @@ public class HubActivity {
 
                     for (final Myo myo : myos) {
 
-                        //if (myo.getDeviceAddress().equals(DeviceAddress)) {
-
                         CurrentMyo = myo;
                         Log.d("MYO","Myo Connected");
-                        isMyoConnected = true;
                         myo.connect();
                         myo.setConnectionSpeed(BaseMyo.ConnectionSpeed.HIGH);
                         myo.writeSleepMode(MyoCmds.SleepMode.NEVER, null);
                         myo.writeMode(MyoCmds.EmgMode.FILTERED, MyoCmds.ImuMode.RAW,
                                 MyoCmds.ClassifierMode.DISABLED, null);
                         myo.writeUnlock(MyoCmds.UnlockType.HOLD, null);
-                        //myo.readBatteryLevel(MainActivity.this);
                         mImuProcessor = new ImuProcessor();
                         myo.addProcessor(mImuProcessor);
+                        isMyoConnected = true;
 
                         mImuProcessor.addListener(new ImuProcessor.ImuDataListener() {
                             @Override
@@ -98,7 +93,6 @@ public class HubActivity {
                         mEmgProcessor.addListener(new EmgProcessor.EmgDataListener() {
                             @Override
                             public void onNewEmgData(EmgData emgData) {
-//                                if (WriteMode && System.currentTimeMillis() - lastUpdated > 499) {
                                     while (i < 50 && WriteMode == true) {
                                         if (WriteMode && System.currentTimeMillis() - lastUpdated > 499){
                                         i++;
@@ -118,7 +112,7 @@ public class HubActivity {
                                                             (Byte.valueOf(emgData.getData()[6])).toString() + "," +
                                                             (Byte.valueOf(emgData.getData()[7])).toString() + "," +
                                                             orientationData + "," +
-                                                            TrainScreenActivity.gestureRecorded, !isTested);
+                                                            (isTested == true ? null : TrainScreenActivity.gestureRecorded), !isTested);
                                         } catch (IOException e) {
                                             e.printStackTrace();
                                         }

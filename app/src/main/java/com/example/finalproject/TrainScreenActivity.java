@@ -1,6 +1,7 @@
 package com.example.finalproject;
 
 import android.content.Context;
+import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
@@ -11,6 +12,7 @@ import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.Spinner;
 import android.widget.TextView;
+import android.widget.Toast;
 import android.widget.VideoView;
 
 import eu.darken.myolib.MyoCmds;
@@ -32,22 +34,17 @@ public class TrainScreenActivity extends AppCompatActivity {
     boolean myoConnection = false;
     static String gestureRecorded;
     static String path = Environment.getExternalStorageDirectory().getAbsolutePath() + "/Movies/";
-    static String fileName = "train_dummy.csv";
     String[] letterList;
     MyoConnector mMyoConnector;
     private Button trainButton;
-    TextView tv;
-
     HubActivity h;
 
-    private String TAG = "MyO Test";
     Context context;
-    int i = 0;
 
-    final Handler handler = new Handler() {
+    final Handler toastHandler = new Handler(){
         @Override
-        public void handleMessage(Message msg) {
-            gestureClass = (TextView) findViewById(R.id.trainGesture);
+        public void handleMessage(Message msg){
+            Toast.makeText(TrainScreenActivity.this, "Myo Connected", Toast.LENGTH_SHORT).show();
         }
     };
 
@@ -70,6 +67,23 @@ public class TrainScreenActivity extends AppCompatActivity {
         trainVideo = (VideoView) findViewById(R.id.videoView);
         mTextView = (TextView) findViewById(R.id.mTextView);
 
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                while(true){
+                    if(h.isMyoConnected){
+                        try {
+                            Thread.sleep(1000);
+                        } catch (InterruptedException e) {
+                            e.printStackTrace();
+                        }
+                        toastHandler.sendEmptyMessage(0);
+                        break;
+                    }
+                }
+            }
+        }).start();
+
         // https://stackoverflow.com/questions/13377361/how-to-create-a-drop-down-list
         letterList = new String("ABCDEFGHIJKLMNOPQRSTUVWXYZ").split("");
         ArrayAdapter<String> adapter = new ArrayAdapter<String>(this, android.R.layout.simple_dropdown_item_1line, letterList);
@@ -83,9 +97,9 @@ public class TrainScreenActivity extends AppCompatActivity {
                 MainMenu.availableTest.add(chooseLetterDropDown.getSelectedItem().toString());
                 gestureRecorded = chooseLetterDropDown.getSelectedItem().toString().toUpperCase();
 
-//                String url = "http://192.168.43.237/uploads/vids/" + gestureRecorded + ".mp4";
-//                trainVideo.setVideoURI(Uri.parse(url));
-//                trainVideo.start();
+                String url = "http://192.168.43.237/uploads/vids/" + gestureRecorded + ".mp4";
+                trainVideo.setVideoURI(Uri.parse(url));
+                trainVideo.start();
                 h.lastUpdated = System.currentTimeMillis();
                 h.WriteMode = true;
             }

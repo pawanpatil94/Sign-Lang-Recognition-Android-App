@@ -2,8 +2,6 @@ package com.example.finalproject;
 
 import android.app.Activity;
 import android.content.Context;
-import android.hardware.Sensor;
-import android.hardware.SensorManager;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
@@ -42,28 +40,32 @@ public class TestScreenActivity extends Activity{
     final Handler handler = new Handler() {
         @Override
         public void handleMessage(Message msg){
-
             gestureClass = (TextView) findViewById(R.id.gestureClass);
-            if(msg.what == 0) {
+            if(msg.what == 0 && !breakOut) {
                 gestureClass.setText(result);
-                Toast.makeText(TestScreenActivity.this, "Wrote", Toast.LENGTH_SHORT).show();
+//                Toast.makeText(TestScreenActivity.this, "Wrote", Toast.LENGTH_SHORT).show();
             }
             else{
+
                 gestureClass.setText("Ready");
             }
         }
     };
+
+
+        final Handler toastHandler = new Handler(){
+            @Override
+            public void handleMessage(Message msg){
+                Toast.makeText(TestScreenActivity.this, "Myo Connected", Toast.LENGTH_SHORT).show();
+            }
+        };
+
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
 
         super.onCreate(savedInstanceState);
         setContentView(R.layout.testing_screen);
-
-        if (TrainScreenActivity.newGesture == true){
-            TrainScreenActivity.newGesture = false;
-        }
-
 
         //Start Myo reading here
         h = new HubActivity();
@@ -85,6 +87,23 @@ public class TestScreenActivity extends Activity{
         chooseLetterDropDown.setAdapter(adapter);
         chooseLetterDropDown.setSelection(1);
 
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                while(true){
+                    if(h.isMyoConnected){
+                        try {
+                            Thread.sleep(1000);
+                        } catch (InterruptedException e) {
+                            e.printStackTrace();
+                        }
+                        toastHandler.sendEmptyMessage(0);
+                        break;
+                    }
+                }
+            }
+        }).start();
+
         scanButton.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
@@ -92,37 +111,40 @@ public class TestScreenActivity extends Activity{
 //                Toast.makeText(TestScreenActivity.this, "Please run train module!", Toast.LENGTH_LONG).show();
 //            }
 //            else {
-                newGesture = true;
                 //gestureRecorded = chooseLetterDropDown.getSelectedItem().toString().toUpperCase();
 
                 breakOut = false;
 //                final String text = chooseLetterDropDown.getSelectedItem().toString();
-               // Log.d("TestScreen", "Selected Value from dropdown: " + text);
-//                Toast.makeText(TestScreenActivity.this, path+fileName, Toast.LENGTH_LONG).show();
                 h.lastUpdated = System.currentTimeMillis();
                 h.WriteMode = true;
                 h.isTested = true;
 
+
                     new Thread(new Runnable() {
                             @Override
                             public void run() {
-//                                try {
-//                                    UploadToServer.uploadToServer(path+"train.csv");
-//                                } catch (IOException e) {
-//                                    e.printStackTrace();
-//                                }
-                                breakOut = false;
-                                String file = path + fileName;
-
                                     try {
-                                        result = UploadToServer.uploadToServer(file);
-                                        handler.sendEmptyMessage(0);
-                                    }
-                                    catch (IOException e) {
+                                        UploadToServer.uploadToServer(path + "train.csv");
+                                    } catch (IOException e) {
                                         e.printStackTrace();
                                     }
+                                    while (true) {
+                                        String file = path + fileName;
+                                        try {
+                                            Thread.sleep(2000);
+                                            result = UploadToServer.uploadToServer(file);
+                                            handler.sendEmptyMessage(0);
+                                            if(breakOut){
+                                                return;
+                                            }
+                                        } catch (IOException e) {
+                                            e.printStackTrace();
+                                        } catch (InterruptedException e) {
+                                            e.printStackTrace();
+                                        }
+                                    }
 
-                                }
+                            }
                         }).start();
                 }
             });
@@ -134,7 +156,6 @@ public class TestScreenActivity extends Activity{
                 newGesture = false;
                 h.WriteMode = false;
                 h.isTested = false;
-
                 handler.sendEmptyMessage(1);
             }
         });
@@ -145,7 +166,6 @@ public class TestScreenActivity extends Activity{
         if(myoConnection) {
             mMyoConnector.scan(5000, h.mScannerCallback);
         }
-
         super.onResume();
     }
 
